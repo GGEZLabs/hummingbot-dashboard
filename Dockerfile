@@ -3,16 +3,17 @@ FROM continuumio/miniconda3:latest AS builder
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y sudo libusb-1.0 python3-dev gcc && \
+    apt-get install -y sudo libusb-1.0 python3-dev gcc g++ build-essential && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/dashboard
 
 # Create conda environment
-COPY environment_conda.yml /tmp/environment_conda.yml
-RUN conda env create -f /tmp/environment_conda.yml && \
+COPY environment_conda.yml environment_conda.yml
+COPY hummingbot /home/dashboard/hummingbot
+RUN conda env create -f environment_conda.yml && \
     conda clean -afy && \
-    rm /tmp/environment_conda.yml
+    rm environment_conda.yml
 
 # Copy remaining files
 COPY . .
