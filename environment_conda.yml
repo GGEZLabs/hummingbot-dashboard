@@ -7,7 +7,7 @@ dependencies:
   - sqlalchemy=1.4
   - pip
   - pip:
-      - ./hummingbot
+      - git+https://github.com/GGEZLabs/hummingbot.git
       - numpy==1.26.4
       - streamlit==1.33.0
       - watchdog

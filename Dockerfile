@@ -10,7 +10,6 @@ WORKDIR /home/dashboard
 
 # Create conda environment
 COPY environment_conda.yml environment_conda.yml
-COPY hummingbot /home/dashboard/hummingbot
 RUN conda env create -f environment_conda.yml && \
     conda clean -afy && \
     rm environment_conda.yml
