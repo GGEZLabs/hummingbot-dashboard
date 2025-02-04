@@ -1,80 +1,85 @@
-name: Dashboard Docker Buildx Workflow
+name: Dashboard Docker CI Pipeline
 
 on:
   pull_request:
     types: [closed]
+  push:
     branches:
       - main
-      - development
-  release:
-    types: [published, edited]
+      - DEV-Branch
+    paths: ['!terraform/**']
 
 jobs:
-  build_pr:
-    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+  build:
+    name: Build, Scan, and Deploy Docker Image
     runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: eu-west-1
+      REPO_NAME: ggez                        # REPOSITORY: ${{ env.REPO_NAME }}
+      ECS_SERVICE: ggez-service-prod             # set this to your Amazon ECS service name
+      ECS_CLUSTER: ggez-ecs-cluster-prod         # set this to your Amazon ECS cluster name
+      ECS_TASK_DEFINITION: ./task-definition/ggez-prod.json
+      CONTAINER_NAME: ggez-hummingbot-dashboard-prod                  # set this to the name of the container in the task definition
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.1.0
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
 
-      - name: Build and push Development Image
-        if: github.base_ref == 'development'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: hummingbot/dashboard:development
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+  
+      - name: Build, tag, and push docker image to Amazon ECR
+        id: build-image
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ env.REPO_NAME }}
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            -t $REGISTRY/$REPOSITORY:${{ github.sha }} .
+          
+          docker push $REGISTRY/$REPOSITORY:${{ github.sha }}
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          echo "image=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Build and push Latest Image
-        if: github.base_ref == 'main'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: hummingbot/dashboard:latest
+      # - name: Trivy Scan Docker Image
+      #   id: trivy-scan
+      #   run: |
+      #     docker pull $REGISTRY/$REPOSITORY:$IMAGE_TAG
+      #     docker run --rm aquasec/trivy:latest image $REGISTRY/$REPOSITORY:$IMAGE_TAG
+      #   env:
+      #     DOCKER_IMAGE: ${{ steps.build-image.outputs.image }}
 
-  build_release:
-    if: github.event_name == 'release'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
+      # - name: Render Amazon ECS task definition
+      #   id: task-def
+      #   env:
+      #     AWS_REGION: ${{ env.AWS_REGION }}
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #     REPOSITORY: ${{ env.REPO_NAME }}
+      #     IMAGE_TAG: latest
+      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+      #   with:
+      #     task-definition: ${{ env.ECS_TASK_DEFINITION }}
+      #     container-name: ${{ env.CONTAINER_NAME }}
+      #     image: ${{ steps.build-image.outputs.image }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.1.0
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Extract tag name
-        id: get_tag
-        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: hummingbot/dashboard:${{ steps.get_tag.outputs.VERSION }}
+      # - name: Deploy to Amazon ECS service
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      #   with:
+      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+      #     service: ${{ env.ECS_SERVICE }}
+      #     cluster: ${{ env.ECS_CLUSTER }}
