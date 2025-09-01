@@ -36,7 +36,9 @@ def filter_hummingbot_images(images):
     return hummingbot_images
 
 
-def launch_new_bot(bot_name, image_name, credentials, selected_controllers, max_global_drawdown, max_controller_drawdown):
+def launch_new_bot(
+    bot_name, image_name, credentials, selected_config, selected_controllers, max_global_drawdown, max_controller_drawdown
+):
     """Launch a new bot with the selected configuration."""
     if not bot_name:
         st.warning("You need to define the bot name.")
@@ -127,7 +129,7 @@ with st.container(border=True):
             selected_config = st.selectbox("Credentials Profile configs", options=available_configs, index=0, key="config_select")
         except Exception as e:
             st.error(f"Failed to fetch credentials: {e}")
-            credentials = st.text_input("Credentials Profile configs", value="default", key="config_input")
+            selected_config = st.text_input("Credentials Profile configs", value="default", key="config_input")
 
     with col4:
         try:
@@ -278,7 +280,13 @@ with st.container(border=True):
                 if selected_controllers:
                     with st.spinner("🚀 Starting Bot... This process may take a few seconds"):
                         if launch_new_bot(
-                            bot_name, image_name, credentials, selected_controllers, max_global_drawdown, max_controller_drawdown
+                            bot_name,
+                            image_name,
+                            credentials,
+                            selected_config,
+                            selected_controllers,
+                            max_global_drawdown,
+                            max_controller_drawdown,
                         ):
                             st.rerun()
                 else:
