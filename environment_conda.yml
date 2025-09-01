@@ -61,7 +61,6 @@ dependencies:
   - zlib>=1.2.13
 
   - pip:
-      - hummingbot-api-client
       - nest_asyncio
       - streamlit>=1.36.0
       - watchdog

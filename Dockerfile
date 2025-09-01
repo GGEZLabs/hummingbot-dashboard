@@ -1,10 +1,10 @@
 # =================================================================
 # STAGE 1: Builder
-# Builds a Python 3.12-compatible wheel in a single, consistent environment.
+# Builds Python 3.12-compatible wheels in a consistent environment.
 # =================================================================
 FROM continuumio/miniconda3:latest AS builder
 
-# Install essential C++ compiler tools
+# Install essential build tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential && \
     rm -rf /var/lib/apt/lists/*
@@ -12,21 +12,23 @@ RUN apt-get update && \
 WORKDIR /app
 
 # 1. Create the final Dashboard environment from its YAML file.
-# The path is now relative to the new build context (the parent directory).
 COPY hummingbot-dashboard/environment_conda.yml .
 RUN conda env create -f environment_conda.yml
 
-# 2. Install the necessary BUILD dependencies for Hummingbot into this environment.
-RUN conda run -n dashboard pip install --no-cache-dir cython "numpy<2.0.0" wheel setuptools
+# 2. Install build dependencies inside the environment
+RUN conda run -n dashboard pip install --no-cache-dir cython "numpy<2.0.0" wheel setuptools build
 
-# 3. Copy the Hummingbot client source code. This now works because the
-# 'hummingbot' folder is inside the build context.
+# 3. Copy sources
 COPY hummingbot ./hummingbot-source
+COPY hummingbot-api-client ./hummingbot-api-client
 
-# 4. Build the wheel INSIDE the Python 3.12 Dashboard environment.
+# 4. Build the hummingbot wheel (setup.py-based)
 WORKDIR /app/hummingbot-source
 RUN conda run -n dashboard python setup.py bdist_wheel
 
+# 5. Build the hummingbot-api-client wheel (pyproject.toml-based)
+WORKDIR /app/hummingbot-api-client
+RUN conda run -n dashboard python -m build --wheel
 
 # =================================================================
 # STAGE 2: Release Image
@@ -34,30 +36,32 @@ RUN conda run -n dashboard python setup.py bdist_wheel
 # =================================================================
 FROM continuumio/miniconda3:latest AS release
 
-# Install only essential runtime libraries
+# Install runtime libraries
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libusb-1.0-0 curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy the ENTIRE pre-built conda environment from the builder stage.
+# Copy the pre-built conda environment from builder
 COPY --from=builder /opt/conda/envs/dashboard /opt/conda/envs/dashboard
 
-# Set the working directory for the Dashboard application
 WORKDIR /home/dashboard
 
-# 1. Install the compatible wheel that was just built.
+# 1. Install hummingbot wheel
 COPY --from=builder /app/hummingbot-source/dist/hummingbot-*.whl .
 RUN /opt/conda/envs/dashboard/bin/pip install --no-deps --no-cache-dir hummingbot-*.whl && rm hummingbot-*.whl
 
-# 2. Copy the Dashboard's application source code.
-# The path is relative to the new build context.
+# 2. Install hummingbot-api-client wheel
+COPY --from=builder /app/hummingbot-api-client/dist/hummingbot_api_client-*.whl .
+RUN /opt/conda/envs/dashboard/bin/pip install --no-deps --no-cache-dir hummingbot_api_client-*.whl && rm hummingbot_api_client-*.whl
+
+# 3. Copy the Dashboard source
 COPY hummingbot-dashboard/. .
 
 # Create mount points
 RUN mkdir -p /home/dashboard/data
 
-# Expose the standard Streamlit port
+# Expose Streamlit port
 EXPOSE 8501
 
-# Set the entrypoint to run the application using the absolute path to streamlit.
+# Entrypoint for Streamlit
 ENTRYPOINT ["/opt/conda/envs/dashboard/bin/streamlit", "run", "main.py"]
