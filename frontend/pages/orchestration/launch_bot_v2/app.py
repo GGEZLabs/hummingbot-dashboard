@@ -24,7 +24,7 @@ def get_controller_configs():
 def filter_hummingbot_images(images):
     """Filter images to only show Hummingbot-related ones."""
     hummingbot_images = []
-    pattern = r'.+/hummingbot:'
+    pattern = r".+hummingbot:"
 
     for image in images:
         try:
@@ -36,8 +36,7 @@ def filter_hummingbot_images(images):
     return hummingbot_images
 
 
-def launch_new_bot(bot_name, image_name, credentials, selected_controllers, max_global_drawdown,
-                   max_controller_drawdown):
+def launch_new_bot(bot_name, image_name, credentials, selected_controllers, max_global_drawdown, max_controller_drawdown):
     """Launch a new bot with the selected configuration."""
     if not bot_name:
         st.warning("You need to define the bot name.")
@@ -46,8 +45,10 @@ def launch_new_bot(bot_name, image_name, credentials, selected_controllers, max_
         st.warning("You need to select the hummingbot image.")
         return False
     if not selected_controllers:
-        st.warning("You need to select the controllers configs. Please select at least one controller "
-                   "config by clicking on the checkbox.")
+        st.warning(
+            "You need to select the controllers configs. Please select at least one controller "
+            "config by clicking on the checkbox."
+        )
         return False
 
     start_time_str = time.strftime("%Y%m%d-%H%M")
@@ -58,6 +59,7 @@ def launch_new_bot(bot_name, image_name, credentials, selected_controllers, max_
         deploy_config = {
             "instance_name": full_bot_name,
             "credentials_profile": credentials,
+            "account_config": selected_config,
             "controllers_config": selected_controllers,
             "image": image_name,
         }
@@ -85,7 +87,7 @@ def delete_selected_configs(selected_controllers):
             for config in selected_controllers:
                 # Remove .yml extension if present
                 config_name = config.replace(".yml", "")
-                response = backend_api_client.controllers.delete_controller_config(config_name)
+                backend_api_client.controllers.delete_controller_config(config_name)
                 st.success(f"Deleted {config_name}")
             return True
 
@@ -106,33 +108,28 @@ with st.container(border=True):
     st.info("🤖 **Bot Configuration:** Set up your bot instance with basic configuration")
 
     # Create three columns for the configuration inputs
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        bot_name = st.text_input(
-            "Instance Name",
-            placeholder="Enter a unique name for your bot instance",
-            key="bot_name_input"
-        )
+        bot_name = st.text_input("Instance Name", placeholder="Enter a unique name for your bot instance", key="bot_name_input")
 
     with col2:
         try:
             available_credentials = backend_api_client.accounts.list_accounts()
-            credentials = st.selectbox(
-                "Credentials Profile",
-                options=available_credentials,
-                index=0,
-                key="credentials_select"
-            )
+            credentials = st.selectbox("Credentials Profile", options=available_credentials, index=0, key="credentials_select")
         except Exception as e:
             st.error(f"Failed to fetch credentials: {e}")
-            credentials = st.text_input(
-                "Credentials Profile",
-                value="master_account",
-                key="credentials_input"
-            )
+            credentials = st.text_input("Credentials Profile", value="master_account", key="credentials_input")
 
     with col3:
+        try:
+            available_configs = backend_api_client.accounts.list_accounts_configs(credentials)
+            selected_config = st.selectbox("Credentials Profile configs", options=available_configs, index=0, key="config_select")
+        except Exception as e:
+            st.error(f"Failed to fetch credentials: {e}")
+            credentials = st.text_input("Credentials Profile configs", value="default", key="config_input")
+
+    with col4:
         try:
             all_images = backend_api_client.docker.get_available_images("hummingbot")
             available_images = filter_hummingbot_images(all_images)
@@ -146,19 +143,10 @@ with st.container(border=True):
             if default_image not in available_images:
                 available_images.insert(0, default_image)
 
-            image_name = st.selectbox(
-                "Hummingbot Image",
-                options=available_images,
-                index=0,
-                key="image_select"
-            )
+            image_name = st.selectbox("Hummingbot Image", options=available_images, index=0, key="image_select")
         except Exception as e:
             st.error(f"Failed to fetch available images: {e}")
-            image_name = st.text_input(
-                "Hummingbot Image",
-                value="hummingbot/hummingbot:latest",
-                key="image_input"
-            )
+            image_name = st.text_input("Hummingbot Image", value="hummingbot/hummingbot:latest", key="image_input")
 
 # Risk Management Section
 with st.container(border=True):
@@ -174,7 +162,7 @@ with st.container(border=True):
             step=100.0,
             format="%.2f",
             help="Maximum allowed drawdown across all controllers",
-            key="global_drawdown_input"
+            key="global_drawdown_input",
         )
 
     with col2:
@@ -185,7 +173,7 @@ with st.container(border=True):
             step=100.0,
             format="%.2f",
             help="Maximum allowed drawdown per controller",
-            key="controller_drawdown_input"
+            key="controller_drawdown_input",
         )
 
 # Controllers Section
@@ -209,7 +197,7 @@ with st.container(border=True):
             # Skip configs without an ID
             st.warning(f"Config missing 'id' field: {config}")
             continue
-            
+
         config_data = config.get("config", config)  # New format has config nested
 
         connector_name = config_data.get("connector_name", "Unknown")
@@ -229,17 +217,19 @@ with st.container(border=True):
             config_base = config_name
             version = "NaN"
 
-        data.append({
-            "Select": False,  # Checkbox column
-            "Config Base": config_base,
-            "Version": version,
-            "Controller Name": controller_name,
-            "Controller Type": controller_type,
-            "Connector": connector_name,
-            "Trading Pair": trading_pair,
-            "Amount (USDT)": f"${total_amount_quote:,.2f}",
-            "_config_name": config_name  # Hidden column for reference
-        })
+        data.append(
+            {
+                "Select": False,  # Checkbox column
+                "Config Base": config_base,
+                "Version": version,
+                "Controller Name": controller_name,
+                "Controller Type": controller_type,
+                "Connector": connector_name,
+                "Trading Pair": trading_pair,
+                "Amount (USDT)": f"${total_amount_quote:,.2f}",
+                "_config_name": config_name,  # Hidden column for reference
+            }
+        )
 
     # Display info and action buttons
     if data:
@@ -260,15 +250,11 @@ with st.container(border=True):
             disabled=[col for col in df.columns if col != "Select"],  # Only allow editing the Select column
             hide_index=True,
             use_container_width=True,
-            key="controller_table"
+            key="controller_table",
         )
 
         # Get selected controllers from the edited dataframe
-        selected_controllers = [
-            row["_config_name"]
-            for _, row in edited_df.iterrows()
-            if row["Select"]
-        ]
+        selected_controllers = [row["_config_name"] for _, row in edited_df.iterrows() if row["Select"]]
 
         # Display selected count
         if selected_controllers:
@@ -290,9 +276,10 @@ with st.container(border=True):
             deploy_button_style = "primary" if selected_controllers else "secondary"
             if st.button("🚀 Deploy Bot", type=deploy_button_style, use_container_width=True):
                 if selected_controllers:
-                    with st.spinner('🚀 Starting Bot... This process may take a few seconds'):
-                        if launch_new_bot(bot_name, image_name, credentials, selected_controllers,
-                                          max_global_drawdown, max_controller_drawdown):
+                    with st.spinner("🚀 Starting Bot... This process may take a few seconds"):
+                        if launch_new_bot(
+                            bot_name, image_name, credentials, selected_controllers, max_global_drawdown, max_controller_drawdown
+                        ):
                             st.rerun()
                 else:
                     st.warning("Please select at least one controller to deploy")
