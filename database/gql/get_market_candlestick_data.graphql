@@ -1,0 +1,25 @@
+query GetMarketCandlestickData(
+    $p_time_interval: String!
+    $p_trading_pair: String!
+    $p_start_time: timestamptz!
+    $p_end_time: timestamptz!
+    $p_exchange: String
+  ) {
+    market_get_candlestick_data(
+      args: {
+        p_end_time: $p_end_time
+        p_start_time: $p_start_time
+        p_time_interval: $p_time_interval
+        p_trading_pair: $p_trading_pair
+        p_exchange: $p_exchange
+      }
+    ) {
+      exchange
+      open_price
+      close_price
+      high
+      low
+      trading_pair
+      time_bucket
+    }
+  }

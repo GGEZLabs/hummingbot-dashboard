@@ -1,0 +1,66 @@
+query GetMarketData(
+  $_base: String = "%GGEZ1%"
+  $_quote: String = "%USDT%"
+  $_exchange: String = "%"
+  $_exchange_type: String = "%"
+) {
+  market(
+    where: {
+      _and: [
+        { pair: { _ilike: $_base } }
+        { pair: { _ilike: $_quote } }
+        { exchange: { _ilike: $_exchange } }
+        { exchange_type: { _ilike: $_exchange_type } }
+      ]
+    }
+  ) {
+    exchange
+    exchange_type
+    pair_link
+    blockchain
+    pair
+    price
+    volume
+    amount
+  }
+
+  market_aggregate(
+    where: {
+      _and: [
+        { pair: { _ilike: $_base } }
+        { pair: { _ilike: $_quote } }
+        { exchange: { _ilike: $_exchange } }
+        { exchange_type: { _ilike: $_exchange_type } }
+      ]
+    }
+  ) {
+    aggregate {
+      sum {
+        volume
+        amount
+      }
+      avg {
+        price
+      }
+      count
+    }
+  }
+
+  avg_price: market_aggregate(
+    where: {
+      _and: [
+        { price: { _neq: 0 } }
+        { pair: { _ilike: $_base } }
+        { pair: { _ilike: $_quote } }
+        { exchange: { _ilike: $_exchange } }
+        { exchange_type: { _ilike: $_exchange_type } }
+      ]
+    }
+  ) {
+    aggregate {
+      avg {
+        price
+      }
+    }
+  }
+}

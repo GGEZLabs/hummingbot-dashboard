@@ -1,0 +1,9 @@
+query GetPriceChangeSummary($p_trading_pair: String) {
+  market_price_change_summary(where: { trading_pair: { _eq: $p_trading_pair } }) {
+    end_price
+    period
+    price_change_pct
+    start_price
+    trading_pair
+  }
+}

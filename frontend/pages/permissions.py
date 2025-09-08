@@ -2,7 +2,10 @@ import streamlit as st
 
 
 def main_page():
-    return [st.Page("frontend/pages/landing.py", title="GGEZ1 Hummingbot Dashboard", icon="📊", url_path="landing")]
+    return [
+        st.Page("frontend/pages/landing.py", title="Landing Page", icon="ℹ️", url_path="landing"),
+        st.Page("frontend/pages/dashboard.py", title="GGEZ1 Hummingbot Dashboard", icon="📊", url_path="dashboard"),
+    ]
 
 
 def public_pages():

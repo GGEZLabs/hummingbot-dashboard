@@ -12,6 +12,7 @@ services:
       - BACKEND_API_PORT=8000
       - BACKEND_API_USERNAME=admin
       - BACKEND_API_PASSWORD=admin
+      - HASURA_GRAPHQL_URL=http://localhost:8443/v1/graphql
     volumes:
       - .:/home/dashboard
     networks:
