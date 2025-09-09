@@ -1,67 +1,82 @@
-# =================================================================
+# =ger================================================================
 # STAGE 1: Builder
-# Builds Python 3.12-compatible wheels in a consistent environment.
+# Use mambaforge for a faster, more stable build process.
 # =================================================================
-FROM continuumio/miniconda3:latest AS builder
+FROM condaforge/mambaforge:latest AS builder
 
-# Install essential build tools
+# Install essential build tools and clean up in the same layer
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# 1. Create the final Dashboard environment from its YAML file.
+# 1. Create the full build environment using Mamba.
+# Using 'mamba' instead of 'conda' is much faster and less memory-intensive.
 COPY hummingbot-dashboard/environment_conda.yml .
-RUN conda env create -f environment_conda.yml
+RUN mamba env create -f environment_conda.yml && \
+    mamba clean --all --yes
 
-# 2. Install build dependencies inside the environment
-RUN conda run -n dashboard pip install --no-cache-dir cython "numpy<2.0.0" wheel setuptools build
+# 2. Install additional build dependencies if needed.
+# This line is kept for structural consistency.
+RUN mamba run -n dashboard pip install --no-cache-dir cython "numpy<2.0.0" wheel setuptools build
 
-# 3. Copy sources
+# 3. Copy sources after dependency installation to leverage caching.
 COPY hummingbot ./hummingbot-source
 COPY hummingbot-api-client ./hummingbot-api-client
 
-# 4. Build the hummingbot wheel (setup.py-based)
+# 4. Build the hummingbot wheel.
 WORKDIR /app/hummingbot-source
-RUN conda run -n dashboard python setup.py bdist_wheel
+RUN mamba run -n dashboard python setup.py bdist_wheel
 
-# 5. Build the hummingbot-api-client wheel (pyproject.toml-based)
+# 5. Build the hummingbot-api-client wheel.
 WORKDIR /app/hummingbot-api-client
-RUN conda run -n dashboard python -m build --wheel
+RUN mamba run -n dashboard python -m build --wheel
 
 # =================================================================
 # STAGE 2: Release Image
-# Creates the final, lean image for the Dashboard.
+# Creates the final, lean image with a Mamba-built runtime environment.
 # =================================================================
-FROM continuumio/miniconda3:latest AS release
+FROM condaforge/mambaforge:latest AS release
 
-# Install runtime libraries
+# Install essential runtime libraries and clean up.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libusb-1.0-0 curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy the pre-built conda environment from builder
-COPY --from=builder /opt/conda/envs/dashboard /opt/conda/envs/dashboard
+# 1. Create the lean runtime environment from the runtime-specific YAML file.
+WORKDIR /app
+COPY hummingbot-dashboard/runtime-environment.yml .
+RUN mamba env create -f runtime-environment.yml && \
+    mamba clean --all --yes
 
 WORKDIR /home/dashboard
 
-# 1. Install hummingbot wheel
+# 2. Install the pre-built wheels and clean up in a single layer.
 COPY --from=builder /app/hummingbot-source/dist/hummingbot-*.whl .
-RUN /opt/conda/envs/dashboard/bin/pip install --no-deps --no-cache-dir hummingbot-*.whl && rm hummingbot-*.whl
-
-# 2. Install hummingbot-api-client wheel
 COPY --from=builder /app/hummingbot-api-client/dist/hummingbot_api_client-*.whl .
-RUN /opt/conda/envs/dashboard/bin/pip install --no-deps --no-cache-dir hummingbot_api_client-*.whl && rm hummingbot_api_client-*.whl
+RUN mamba run -n dashboard pip install --no-deps --no-cache-dir hummingbot-*.whl hummingbot_api_client-*.whl && \
+    rm *.whl
 
-# 3. Copy the Dashboard source
+# 3. Copy the Dashboard source code.
 COPY hummingbot-dashboard/. .
 
-# Create mount points
+# 4. Aggressive cleanup of the final environment to reduce size.
+# This removes tests, docs, pyc files, and static libraries (.a files)
+# that are not needed for a runtime image.
+RUN find /opt/conda/envs/dashboard -type d -name '__pycache__' -exec rm -r '{}' + && \
+    find /opt/conda/envs/dashboard -type f -name '*.pyc' -delete && \
+    find /opt/conda/envs/dashboard -type f -name '*.a' -delete && \
+    find /opt/conda/envs/dashboard -type d -name 'tests' -exec rm -r '{}' +
+
+# Create mount points.
 RUN mkdir -p /home/dashboard/data
 
-# Expose Streamlit port
+# Expose Streamlit port.
 EXPOSE 8501
 
-# Entrypoint for Streamlit
-ENTRYPOINT ["/opt/conda/envs/dashboard/bin/streamlit", "run", "main.py"]
+# Set the PATH for cleaner commands.
+ENV PATH /opt/conda/envs/dashboard/bin:$PATH
+
+# Entrypoint for Streamlit.
+ENTRYPOINT ["streamlit", "run", "main.py"]
