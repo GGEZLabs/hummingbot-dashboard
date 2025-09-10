@@ -1,15 +1,29 @@
 import streamlit as st
 
 
-def main_page():
-    return [
-        st.Page("frontend/pages/landing.py", title="Landing Page", icon="ℹ️", url_path="landing"),
-        st.Page("frontend/pages/dashboard.py", title="GGEZ1 Hummingbot Dashboard", icon="📊", url_path="dashboard"),
-    ]
-
-
 def public_pages():
     return {
+        "Main": [
+            st.Page("frontend/pages/landing.py", title="Landing Page", icon="ℹ️", url_path="landing"),
+        ]
+    }
+
+
+def private_pages():
+    return {
+        "Market Data": [
+            st.Page("frontend/pages/dashboard.py", title="GGEZ1 Market Data", icon="📊", url_path="dashboard"),
+        ],
+        "Bot Orchestration": [
+            st.Page("frontend/pages/orchestration/instances/app.py", title="Instances", icon="🦅", url_path="instances"),
+            st.Page("frontend/pages/orchestration/launch_bot_v2/app.py", title="Deploy V2", icon="🚀", url_path="launch_bot_v2"),
+            st.Page("frontend/pages/orchestration/credentials/app.py", title="Credentials", icon="🔑", url_path="credentials"),
+            st.Page("frontend/pages/orchestration/portfolio/app.py", title="Portfolio", icon="💰", url_path="portfolio"),
+            st.Page("frontend/pages/orchestration/trading/app.py", title="Trading", icon="🪄", url_path="trading"),
+            st.Page(
+                "frontend/pages/orchestration/archived_bots/app.py", title="Archived Bots", icon="🗃️", url_path="archived_bots"
+            ),
+        ],
         "Config Generator": [
             st.Page("frontend/pages/config/volume_pumper/app.py", title="Volume Pumper", icon="📈", url_path="volume_pumper"),
             st.Page("frontend/pages/config/grid_strike/app.py", title="Grid Strike", icon="🎳", url_path="grid_strike"),
@@ -31,19 +45,4 @@ def public_pages():
         "Community Pages": [
             st.Page("frontend/pages/data/tvl_vs_mcap/app.py", title="TVL vs Market Cap", icon="🦉", url_path="tvl_vs_mcap"),
         ],
-    }
-
-
-def private_pages():
-    return {
-        "Bot Orchestration": [
-            st.Page("frontend/pages/orchestration/instances/app.py", title="Instances", icon="🦅", url_path="instances"),
-            st.Page("frontend/pages/orchestration/launch_bot_v2/app.py", title="Deploy V2", icon="🚀", url_path="launch_bot_v2"),
-            st.Page("frontend/pages/orchestration/credentials/app.py", title="Credentials", icon="🔑", url_path="credentials"),
-            st.Page("frontend/pages/orchestration/portfolio/app.py", title="Portfolio", icon="💰", url_path="portfolio"),
-            st.Page("frontend/pages/orchestration/trading/app.py", title="Trading", icon="🪄", url_path="trading"),
-            st.Page(
-                "frontend/pages/orchestration/archived_bots/app.py", title="Archived Bots", icon="🗃️", url_path="archived_bots"
-            ),
-        ]
     }

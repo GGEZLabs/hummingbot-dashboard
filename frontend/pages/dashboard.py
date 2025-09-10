@@ -90,7 +90,7 @@ def get_bot_status(bot_name):
 
 
 # Quick Stats Dashboard
-st.markdown("## 📊 Live Dashboard Overview")
+st.markdown("## 📊 GGEZ1 Market Data")
 
 # Fetch market data
 market_data = fetch_market_data()
