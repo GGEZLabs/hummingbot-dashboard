@@ -24,7 +24,7 @@ def get_controller_configs():
 def filter_hummingbot_images(images):
     """Filter images to only show Hummingbot-related ones."""
     hummingbot_images = []
-    pattern = r".+hummingbot:"
+    pattern = r".+hummingbot_v2.7"
 
     for image in images:
         try:
@@ -37,7 +37,14 @@ def filter_hummingbot_images(images):
 
 
 def launch_new_bot(
-    bot_name, image_name, credentials, selected_config, selected_controllers, max_global_drawdown, max_controller_drawdown
+    bot_name,
+    image_name,
+    credentials,
+    selected_config,
+    selected_controllers,
+    max_global_drawdown,
+    max_controller_drawdown,
+    headless_mode,
 ):
     """Launch a new bot with the selected configuration."""
     if not bot_name:
@@ -64,6 +71,7 @@ def launch_new_bot(
             "account_config": selected_config,
             "controllers_config": selected_controllers,
             "image": image_name,
+            "headless": headless_mode,
         }
 
         # Add optional drawdown parameters if set
@@ -136,19 +144,22 @@ with st.container(border=True):
             all_images = backend_api_client.docker.get_available_images("hummingbot")
             available_images = filter_hummingbot_images(all_images)
 
-            if not available_images:
-                # Fallback to default if no hummingbot images found
-                available_images = ["hummingbot/hummingbot:latest"]
+            # if not available_images:
+            #     # Fallback to default if no hummingbot images found
+            #     available_images = ["hummingbot/hummingbot:latest"]
 
-            # Ensure default image is in the list
-            default_image = "hummingbot/hummingbot:latest"
-            if default_image not in available_images:
-                available_images.insert(0, default_image)
+            # # Ensure default image is in the list
+            # default_image = "hummingbot/hummingbot:latest"
+            # if default_image not in available_images:
+            #     available_images.insert(0, default_image)
 
             image_name = st.selectbox("Hummingbot Image", options=available_images, index=0, key="image_select")
         except Exception as e:
             st.error(f"Failed to fetch available images: {e}")
             image_name = st.text_input("Hummingbot Image", value="hummingbot/hummingbot:latest", key="image_input")
+
+    headless_mode = st.toggle("Run Hummingbot in Headless Mode", value=True)
+
 
 # Risk Management Section
 with st.container(border=True):
@@ -287,6 +298,7 @@ with st.container(border=True):
                             selected_controllers,
                             max_global_drawdown,
                             max_controller_drawdown,
+                            headless_mode,
                         ):
                             st.rerun()
                 else:
