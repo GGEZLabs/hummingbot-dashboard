@@ -26,6 +26,12 @@ def private_pages():
         ],
         "Config Generator": [
             st.Page("frontend/pages/config/volume_pumper/app.py", title="Volume Pumper", icon="📈", url_path="volume_pumper"),
+            st.Page(
+                "frontend/pages/config/random_transactions/app.py",
+                title="Random Transactions",
+                icon="🔗",
+                url_path="random_transactions",
+            ),
             st.Page("frontend/pages/config/grid_strike/app.py", title="Grid Strike", icon="🎳", url_path="grid_strike"),
             st.Page("frontend/pages/config/pmm_simple/app.py", title="PMM Simple", icon="👨‍🏫", url_path="pmm_simple"),
             st.Page("frontend/pages/config/pmm_dynamic/app.py", title="PMM Dynamic", icon="👩‍🏫", url_path="pmm_dynamic"),

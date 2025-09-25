@@ -1,11 +1,14 @@
-import streamlit as st
 import nest_asyncio
+import streamlit as st
 
 from frontend.st_utils import get_backend_api_client
 
 nest_asyncio.apply()
 
-def render_save_config(config_base_default: str, config_data: dict):
+
+def render_save_config(
+    config_base_default: str, config_data: dict, all_inputs_valid: bool = True, is_controller_config: bool = True
+):
     st.write("### Upload Config to Hummingbot-API")
     backend_api_client = get_backend_api_client()
     try:
@@ -13,11 +16,11 @@ def render_save_config(config_base_default: str, config_data: dict):
     except Exception as e:
         st.error(f"Failed to fetch controller configs: {e}")
         return
-    
+
     # Check if we're editing an existing config
     existing_config_id = config_data.get("id", "")
     is_existing_config = bool(existing_config_id and any(config.get("id") == existing_config_id for config in all_configs))
-    
+
     if is_existing_config:
         # For existing configs, preserve the original ID
         config_base = existing_config_id.split("_")[0] if "_" in existing_config_id else existing_config_id
@@ -53,15 +56,15 @@ def render_save_config(config_base_default: str, config_data: dict):
     with c2:
         config_tag = st.text_input("Config Tag", value=config_tag)
     with c3:
-        upload_config_to_backend = st.button("Upload")
+        upload_config_to_backend = st.button("Upload", disabled=not all_inputs_valid)
     if upload_config_to_backend:
         config_name = f"{config_base}_{config_tag}"
         config_data["id"] = config_name
         try:
-            backend_api_client.controllers.create_or_update_controller_config(
-                config_name=config_name,
-                config=config_data
-            )
+            if is_controller_config:
+                backend_api_client.controllers.create_or_update_controller_config(config_name=config_name, config=config_data)
+            else:
+                backend_api_client.scripts.create_or_update_script_config(config_name, config_data)
             st.session_state.pop("default_config", None)
             st.success("Config uploaded successfully!")
         except Exception as e:
