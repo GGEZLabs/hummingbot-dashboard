@@ -1,7 +1,7 @@
 import streamlit as st
 
-from frontend.components.config_loader import get_default_config_loader
 from frontend.components.save_config import render_save_config
+from frontend.components.script_config_loader import get_default_config_loader
 from frontend.pages.config.volume_monitor.user_inputs import user_inputs
 from frontend.st_utils import initialize_st_page
 
@@ -22,7 +22,8 @@ st.session_state["default_config"].update(inputs)
 # Render save config section
 st.write("---")
 render_save_config(
-    st.session_state["default_config"].get("id", "volume_monitor_1"),
+    st.session_state["default_config"].get("id", "volume_monitor"),
     st.session_state["default_config"],
+    True,
     is_controller_config=False,
 )
