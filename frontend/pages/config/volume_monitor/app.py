@@ -14,7 +14,7 @@ st.text("This bot monitors the trading volume of a specified pair across multipl
 get_default_config_loader("volume_monitor")
 
 # Get user inputs
-inputs, all_inputs_valid = user_inputs()
+inputs = user_inputs()
 
 # Update session state with inputs
 st.session_state["default_config"].update(inputs)
