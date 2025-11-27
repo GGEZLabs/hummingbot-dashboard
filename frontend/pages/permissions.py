@@ -25,6 +25,12 @@ def private_pages():
             ),
         ],
         "Config Generator": [
+            st.Page(
+                "frontend/pages/config/volume_monitor/app.py",
+                title="Volume Monitor",
+                icon="📊",
+                url_path="volume_monitor",
+            ),
             st.Page("frontend/pages/config/volume_pumper/app.py", title="Volume Pumper", icon="📈", url_path="volume_pumper"),
             st.Page(
                 "frontend/pages/config/random_transactions/app.py",
