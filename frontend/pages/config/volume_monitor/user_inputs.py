@@ -32,7 +32,7 @@ def user_inputs(script_name: str = None):
                 volume_threshold = st.number_input("Volume Threshold", min_value=0.0, value=float(volume_threshold), step=0.1)
 
     return {
-        "exchange": exchange_list,
+        "exchanges": exchange_list,
         "trading_pair": trading_pair,
         "refresh_time": refresh_time,
         "volume_threshold": volume_threshold,
