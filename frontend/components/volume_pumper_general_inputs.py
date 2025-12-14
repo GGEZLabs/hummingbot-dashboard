@@ -84,7 +84,7 @@ def get_volume_pumper_general_inputs(custom_candles=False, controller_name: str 
     with st.expander("", expanded=True):
         st.text("Boundaries Settings")
         c10, c11, c12, c13 = st.columns(4)
-        static_support = default_config.get("static_support", 0.087)
+        static_support = float(default_config.get("static_support", 0.087))
         with c10:
             static_support = st.number_input(
                 "Static Support",
@@ -92,7 +92,7 @@ def get_volume_pumper_general_inputs(custom_candles=False, controller_name: str 
                 format="%.6f",
                 help="Static support level price.",
             )
-        static_resistance = default_config.get("static_resistance", 0.09)
+        static_resistance = float(default_config.get("static_resistance", 0.09))
         with c11:
             static_resistance = st.number_input(
                 "Static Resistance",
@@ -100,14 +100,14 @@ def get_volume_pumper_general_inputs(custom_candles=False, controller_name: str 
                 format="%.6f",
                 help="Static resistance level price.",
             )
-        minimum_boundaries_update_interval = default_config.get("minimum_boundaries_update_interval", 60.0)
+        minimum_boundaries_update_interval = default_config.get("minimum_boundaries_update_interval", 3600.0)
         with c12:
             minimum_boundaries_update_interval = st.number_input(
                 "Min Boundaries Update Interval",
                 value=minimum_boundaries_update_interval,
                 help="Minimum interval to update boundaries.",
             )
-        maximum_boundaries_update_interval = default_config.get("maximum_boundaries_update_interval", 70.0)
+        maximum_boundaries_update_interval = default_config.get("maximum_boundaries_update_interval", 86400.0)
         with c13:
             maximum_boundaries_update_interval = st.number_input(
                 "Max Boundaries Update Interval",
@@ -117,7 +117,7 @@ def get_volume_pumper_general_inputs(custom_candles=False, controller_name: str 
 
         st.text("Wall & Spread Settings")
         c14, c15, c16, c17 = st.columns(4)
-        minimum_flexible_wall_spread = default_config.get("minimum_flexible_wall_spread", 0.15)
+        minimum_flexible_wall_spread = float(default_config.get("minimum_flexible_wall_spread", 0.15))
         with c14:
             minimum_flexible_wall_spread = st.number_input(
                 "Min Flexible Wall Spread",
@@ -125,7 +125,7 @@ def get_volume_pumper_general_inputs(custom_candles=False, controller_name: str 
                 format="%.4f",
                 help="Minimum spread for flexible walls.",
             )
-        maximum_flexible_wall_spread = default_config.get("maximum_flexible_wall_spread", 0.7)
+        maximum_flexible_wall_spread = float(default_config.get("maximum_flexible_wall_spread", 0.7))
         with c15:
             maximum_flexible_wall_spread = st.number_input(
                 "Max Flexible Wall Spread",
@@ -133,7 +133,7 @@ def get_volume_pumper_general_inputs(custom_candles=False, controller_name: str 
                 format="%.4f",
                 help="Maximum spread for flexible walls.",
             )
-        minimum_phase_price_change_perc = default_config.get("minimum_phase_price_change_perc", 0.01)
+        minimum_phase_price_change_perc = float(default_config.get("minimum_phase_price_change_perc", 0.01))
         with c16:
             minimum_phase_price_change_perc = st.number_input(
                 "Min Phase Price Change %",
@@ -141,7 +141,7 @@ def get_volume_pumper_general_inputs(custom_candles=False, controller_name: str 
                 format="%.4f",
                 help="Minimum percentage change for phase price.",
             )
-        maximum_phase_price_change_perc = default_config.get("maximum_phase_price_change_perc", 0.5)
+        maximum_phase_price_change_perc = float(default_config.get("maximum_phase_price_change_perc", 0.5))
         with c17:
             maximum_phase_price_change_perc = st.number_input(
                 "Max Phase Price Change %",
@@ -183,7 +183,7 @@ def get_volume_pumper_general_inputs(custom_candles=False, controller_name: str 
                 value=order_levels_steps,
                 help="Step size for order levels.",
             )
-        max_allowed_depth = default_config.get("max_allowed_depth", 200)
+        max_allowed_depth = float(default_config.get("max_allowed_depth", 200))
         with c22:
             max_allowed_depth = st.number_input(
                 "Max Allowed Depth",
