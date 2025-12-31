@@ -12,30 +12,29 @@ def get_random_transactions_general_inputs(custom_candles=False, script_name: st
         # Fallback for backward compatibility
         default_config = st.session_state.get("default_config", {})
         if "mnemonic_keys_with_addresses" in default_config:
-            st.session_state.chain_accounts = default_config['mnemonic_keys_with_addresses']
+            st.session_state.chain_accounts = default_config["mnemonic_keys_with_addresses"]
 
     with st.expander("Chain Settings", expanded=True):
         c1, c2 = st.columns(2)
-        send_msg_url = default_config.get("send_msg_url", "http://108.163.148.68:8080/bank")
+        chain_id = default_config.get("chain_id", "ggezchain")
         with c1:
-            send_msg_url = st.text_input(
-                "Send message URL",
-                value=send_msg_url,
-                help="Enter the full send message url",
+            chain_id = st.text_input(
+                "Chain ID",
+                value=chain_id,
+                help="Enter the chain id",
             )
 
-        ggezchain_rest_url = default_config.get(
-            "ggezchain_rest_url", "https://drest.ggez.one/cosmos/bank/v1beta1/spendable_balances"
-        )
+        grpc_url = default_config.get("grpc_url", "172.21.10.116:9090")
         with c2:
-            ggezchain_rest_url = st.text_input(
-                "GGEZ Chain Rest URL",
-                value=ggezchain_rest_url,
-                help="Enter the full GGEZ chain rest url",
+            grpc_url = st.text_input(
+                "GRPC URL",
+                value=grpc_url,
+                help="Enter the full GRPC url",
             )
 
     with st.expander("Transaction Settings", expanded=True):
-        c3, c4, c5, c6 = st.columns(4)
+        c3, c4 = st.columns(2)
+        c5, c6, c7 = st.columns(3)
 
         min_delay = default_config.get("min_delay", 60)
         with c3:
@@ -58,7 +57,15 @@ def get_random_transactions_general_inputs(custom_candles=False, script_name: st
         max_tx_amount = default_config.get("max_tx_amount", 3000000)
         with c6:
             max_tx_amount = st.number_input(
-                "Minimum Transaction Amount", value=max_tx_amount, help="Enter the minimum transaction amount. (in uggez1)"
+                "Maximum Transaction Amount", value=max_tx_amount, help="Enter the maximum transaction amount. (in uggez1)"
+            )
+
+        denom = default_config.get("denom", "uggez1")
+        with c7:
+            denom = st.text_input(
+                "Denom",
+                value=denom,
+                help="Enter the denom",
             )
 
     with st.expander("Accounts Settings", expanded=True):
@@ -122,8 +129,9 @@ def get_random_transactions_general_inputs(custom_candles=False, script_name: st
         min_delay,
         max_tx_amount,
         min_tx_amount,
-        send_msg_url,
-        ggezchain_rest_url,
+        chain_id,
+        grpc_url,
+        denom,
         st.session_state.chain_accounts,
         all_inputs_valid,
     )
