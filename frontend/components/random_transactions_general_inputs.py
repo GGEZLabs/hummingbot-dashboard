@@ -9,7 +9,6 @@ def get_random_transactions_general_inputs(custom_candles=False, script_name: st
     if script_name:
         default_config = get_script_config(script_name)
     else:
-        # Fallback for backward compatibility
         default_config = st.session_state.get("default_config", {})
         if "mnemonic_keys_with_addresses" in default_config:
             st.session_state.chain_accounts = default_config["mnemonic_keys_with_addresses"]
