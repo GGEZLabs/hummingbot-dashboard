@@ -18,6 +18,8 @@ def user_inputs():
         chain_id,
         grpc_url,
         denom,
+        gas_limit,
+        fee_amount,
         chain_accounts,
         all_inputs_valid,
     ) = get_random_transactions_general_inputs()
@@ -30,6 +32,8 @@ def user_inputs():
         "chain_id": chain_id,
         "grpc_url": grpc_url,
         "denom": denom,
+        "gas_limit": gas_limit,
+        "fee_amount": fee_amount,
         "mnemonic_keys_with_addresses": format_accounts_for_backend(chain_accounts),
         "script_file_name": "random_transactions.py",
     }

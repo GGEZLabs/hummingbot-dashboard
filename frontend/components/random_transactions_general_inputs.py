@@ -34,6 +34,7 @@ def get_random_transactions_general_inputs(custom_candles=False, script_name: st
     with st.expander("Transaction Settings", expanded=True):
         c3, c4 = st.columns(2)
         c5, c6, c7 = st.columns(3)
+        c8, c9 = st.columns(2)
 
         min_delay = default_config.get("min_delay", 60)
         with c3:
@@ -66,6 +67,12 @@ def get_random_transactions_general_inputs(custom_candles=False, script_name: st
                 value=denom,
                 help="Enter the denom",
             )
+        gas_limit = default_config.get("gas_limit", 200000)
+        with c8:
+            gas_limit = st.number_input("Gas Limit Amount", value=gas_limit, help="Enter the Gas Limit Amount")
+        fee_amount = default_config.get("fee_amount", 200000)
+        with c9:
+            fee_amount = st.number_input("Fee Amount", value=fee_amount, help="Enter the Fee Amount")
 
     with st.expander("Accounts Settings", expanded=True):
         MNEMONIC_REGEX = r"^((\w+\s){11}|(\w+\s){23})\w+$"
@@ -131,6 +138,8 @@ def get_random_transactions_general_inputs(custom_candles=False, script_name: st
         chain_id,
         grpc_url,
         denom,
+        gas_limit,
+        fee_amount,
         st.session_state.chain_accounts,
         all_inputs_valid,
     )
