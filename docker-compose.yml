@@ -1,6 +1,7 @@
 services:
   dashboard:
     container_name: dashboard
+    image: public.ecr.aws/s2m1f3k2/ggezlabs/hummingbot-dashboard:2.7.0
     build:
       context: .. # Use the parent directory (hummingbot_setup_2.7) as the build context
       dockerfile: hummingbot-dashboard/Dockerfile # Specify the path to the Dockerfile relative to the context
